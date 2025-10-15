@@ -1,0 +1,75 @@
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.filters import Command
+
+TOKEN = "8314527247:AAEWOb4BNVkDSzA4Eukn7a7klGFsUX2kp1w"
+
+bot = Bot(token=TOKEN)
+dp = Dispatcher()
+
+main_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton("📢 Объявления"), KeyboardButton("💼 Добавить объявление")],
+        [KeyboardButton("🎁 Скидки"), KeyboardButton("👤 Профиль")],
+        [KeyboardButton("ℹ️ О проекте")]
+    ],
+    resize_keyboard=True
+)
+
+ads = []
+discounts = [
+    {"title": "Кофейня “Beans”", "desc": "10% для студентов по студенческому!"},
+    {"title": "Копи-центр “Print+”", "desc": "15% скидка на печать дипломов."}
+]
+
+@dp.message(Command("start"))
+async def start(message: types.Message):
+    await message.answer(
+        "Привет 👋 Это UniLink — карта студенческих скидок и объявлений!\nВыбери действие ниже:",
+        reply_markup=main_menu
+    )
+
+@dp.message(lambda m: m.text == "📢 Объявления")
+async def show_ads(message: types.Message):
+    if not ads:
+        await message.answer("Пока объявлений нет. Добавь своё!")
+    else:
+        text = "\n\n".join([f"📌 {a['title']}\n{a['desc']}\nКонтакт: {a['contact']}" for a in ads])
+        await message.answer(text)
+
+@dp.message(lambda m: m.text == "💼 Добавить объявление")
+async def add_ad(message: types.Message):
+    await message.answer("Отправь объявление в формате:\n\nНазвание | Описание | Контакт")
+
+@dp.message(lambda m: "|" in m.text)
+async def save_ad(message: types.Message):
+    parts = message.text.split("|")
+    if len(parts) == 3:
+        ads.append({"title": parts[0].strip(), "desc": parts[1].strip(), "contact": parts[2].strip()})
+        await message.answer("✅ Объявление добавлено!")
+    else:
+        await message.answer("❌ Формат неверный. Пример: Название | Описание | Контакт")
+
+@dp.message(lambda m: m.text == "🎁 Скидки")
+async def show_discounts(message: types.Message):
+    text = "\n\n".join([f"🎁 {d['title']}\n{d['desc']}" for d in discounts])
+    await message.answer(text)
+
+@dp.message(lambda m: m.text == "👤 Профиль")
+async def profile(message: types.Message):
+    await message.answer(f"👋 Привет, {message.from_user.first_name}!\nЗдесь будет информация о твоих объявлениях и скидках.")
+
+@dp.message(lambda m: m.text == "ℹ️ О проекте")
+async def about(message: types.Message):
+    await message.answer(
+        "🎓 UniLink — сервис для студентов Бузулука.\n"
+        "Здесь ты можешь найти помощь, обменяться материалами и узнать о скидках от локальных партнёров."
+    )
+
+async def main():
+    print("✅ UniLink запущен")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
