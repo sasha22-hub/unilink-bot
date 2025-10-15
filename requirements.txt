@@ -3,3 +3,4 @@ aiohttp==3.8.5
 yarl==1.9.2
 multidict==6.0.4
 python-dotenv==1.0.1
+openai
